@@ -1,154 +1,196 @@
-const questions = [
-    {
-        question: "Which algorithm has the best average-case time complexity for sorting?",
-        options: ["Bubble Sort", "Merge Sort", "Insertion Sort", "Selection Sort"],
-        answer: 1
-    },
-    {
-        question: "Which protocol is used for secure web browsing?",
-        options: ["HTTP", "FTP", "SSH", "HTTPS"],
-        answer: 3
-    },
-    {
-        question: "What does ACID stand for in databases?",
-        options: [
-            "Atomicity, Consistency, Isolation, Durability",
-            "Accuracy, Consistency, Isolation, Data",
-            "Atomicity, Concurrency, Integrity, Durability",
-            "Availability, Consistency, Isolation, Data"
-        ],
-        answer: 0
-    },
-    {
-        question: "Which OSI layer handles encryption?",
-        options: ["Transport", "Presentation", "Session", "Application"],
-        answer: 1
-    },
-    {
-        question: "What is the time complexity of binary search?",
-        options: ["O(n)", "O(log n)", "O(n log n)", "O(1)"],
-        answer: 1
-    },
-    {
-        question: "Which language is primarily used for Android development?",
-        options: ["Swift", "Kotlin", "Ruby", "Go"],
-        answer: 1
-    },
-    {
-        question: "Which port does HTTPS use by default?",
-        options: ["21", "80", "443", "25"],
-        answer: 2
-    },
-    {
-        question: "What is a deadlock in operating systems?",
-        options: [
-            "Infinite loop",
-            "Two processes waiting on each other",
-            "Memory leak",
-            "CPU overload"
-        ],
-        answer: 1
-    },
-    {
-        question: "Which database is NoSQL?",
-        options: ["MySQL", "PostgreSQL", "MongoDB", "Oracle"],
-        answer: 2
-    },
-    {
-        question: "What does REST stand for?",
-        options: [
-            "Representational State Transfer",
-            "Remote Execution Secure Transfer",
-            "Reliable Encryption System Transfer",
-            "Random Execution State Technique"
-        ],
-        answer: 0
-    }
+/* ================= QUIZ DATA ================= */
+const quizData = [
+  {
+    category: "Programming",
+    questions: [
+      { question: "What does HTML stand for?",
+        options: ["Hyper Text Markup Language","High Text Machine Language","Hyperlinks Text Mark Language","Home Tool Markup Language"],
+        answer: "Hyper Text Markup Language" },
+      { question: "Which is a JavaScript framework?",
+        options: ["React","Laravel","Django","Flask"],
+        answer: "React" }
+    ]
+  },
+  {
+    category: "General Tech",
+    questions: [
+      { question: "Who founded Microsoft?",
+        options: ["Bill Gates","Steve Jobs","Elon Musk","Mark Zuckerberg"],
+        answer: "Bill Gates" },
+      { question: "1 Byte = ?",
+        options: ["8 bits","16 bits","4 bits","2 bits"],
+        answer: "8 bits" }
+    ]
+  }
 ];
 
-let currentQuestion = 0;
-let score = 0;
-let timeLeft = 20;
-let timer;
+let currentQuiz=[],currentIndex=0,score=0,timerInterval,timeLeft=15;
 
-const questionContainer = document.getElementById("question-container");
-const optionsContainer = document.getElementById("options-container");
-const nextBtn = document.getElementById("next-btn");
-const timeDisplay = document.getElementById("time");
-const progressBar = document.getElementById("progress-bar");
+/* ===== Initialize Categories ===== */
+const categorySelect=document.getElementById("categorySelect");
+quizData.forEach((quiz,i)=>{
+  let option=document.createElement("option");
+  option.value=i;
+  option.textContent=quiz.category;
+  categorySelect.appendChild(option);
+});
 
-function startTimer() {
-    timeLeft = 20;
-    timeDisplay.textContent = timeLeft;
-    timer = setInterval(() => {
-        timeLeft--;
-        timeDisplay.textContent = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            nextQuestion();
-        }
-    }, 1000);
+/* ===== Start Quiz ===== */
+function startQuiz(){
+  currentQuiz=quizData[categorySelect.value].questions;
+  currentIndex=0;
+  score=0;
+  document.getElementById("category-section").classList.add("hidden");
+  document.getElementById("quiz-section").classList.remove("hidden");
+  loadQuestion();
 }
 
-function loadQuestion() {
-    clearInterval(timer);
-    startTimer();
+/* ===== Load Question ===== */
+function loadQuestion(){
+  resetTimer();
+  let q=currentQuiz[currentIndex];
+  document.getElementById("question").textContent=q.question;
+  document.getElementById("progressText").textContent=`Question ${currentIndex+1}/${currentQuiz.length}`;
+  document.getElementById("progressBar").style.width=((currentIndex)/currentQuiz.length)*100+"%";
 
-    const q = questions[currentQuestion];
-    questionContainer.textContent = q.question;
-    optionsContainer.innerHTML = "";
-
-    q.options.forEach((option, index) => {
-        const btn = document.createElement("div");
-        btn.textContent = option;
-        btn.classList.add("option");
-        btn.onclick = () => selectAnswer(index, btn);
-        optionsContainer.appendChild(btn);
-    });
-
-    progressBar.style.width = ((currentQuestion) / questions.length) * 100 + "%";
+  let answers=document.getElementById("answers");
+  answers.innerHTML="";
+  q.options.forEach(opt=>{
+    let btn=document.createElement("button");
+    btn.textContent=opt;
+    btn.onclick=()=>selectAnswer(opt);
+    answers.appendChild(btn);
+  });
+  startTimer();
 }
 
-function selectAnswer(index, btn) {
-    clearInterval(timer);
-    const correctAnswer = questions[currentQuestion].answer;
-    const options = document.querySelectorAll(".option");
-
-    options.forEach(opt => opt.style.pointerEvents = "none");
-
-    if (index === correctAnswer) {
-        btn.classList.add("correct");
-        score++;
-    } else {
-        btn.classList.add("wrong");
-        options[correctAnswer].classList.add("correct");
+/* ===== Timer ===== */
+function startTimer(){
+  timeLeft=15;
+  document.getElementById("timer").textContent=`⏳ ${timeLeft}s`;
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    document.getElementById("timer").textContent=`⏳ ${timeLeft}s`;
+    if(timeLeft<=0){
+      clearInterval(timerInterval);
+      nextQuestion();
     }
+  },1000);
+}
+function resetTimer(){ clearInterval(timerInterval); }
+
+/* ===== Answer ===== */
+function selectAnswer(selected){
+  if(selected===currentQuiz[currentIndex].answer) score++;
+  nextQuestion();
 }
 
-function nextQuestion() {
-    currentQuestion++;
-    if (currentQuestion < questions.length) {
-        loadQuestion();
-    } else {
-        showResult();
+/* ===== Next Question ===== */
+function nextQuestion(){
+  currentIndex++;
+  if(currentIndex<currentQuiz.length) loadQuestion();
+  else endQuiz();
+}
+
+/* ===== End Quiz ===== */
+function endQuiz(){
+  document.getElementById("quiz-section").classList.add("hidden");
+  document.getElementById("result-section").classList.remove("hidden");
+  document.getElementById("scoreText").textContent=`Score: ${score}/${currentQuiz.length}`;
+  loadLeaderboard();
+}
+
+/* ===== Leaderboard ===== */
+function saveScore(){
+  let name=document.getElementById("username").value;
+  if(!name) return alert("Enter team name!");
+  let board=JSON.parse(localStorage.getItem("leaderboard"))||[];
+  board.push({name,score});
+  board.sort((a,b)=>b.score-a.score);
+  localStorage.setItem("leaderboard",JSON.stringify(board));
+  loadLeaderboard();
+}
+function loadLeaderboard(){
+  let board=JSON.parse(localStorage.getItem("leaderboard"))||[];
+  let list=document.getElementById("leaderboard");
+  list.innerHTML="";
+  board.slice(0,5).forEach(entry=>{
+    let li=document.createElement("li");
+    li.textContent=`${entry.name} - ${entry.score}`;
+    list.appendChild(li);
+  });
+}
+function restartQuiz(){ location.reload(); }
+
+/* ===== Theme Toggle ===== */
+document.getElementById("toggleTheme").onclick=()=>{
+  document.body.classList.toggle("light");
+};
+
+/* ===== 3D PARTICLE BACKGROUND ===== */
+const canvas=document.getElementById("bgCanvas");
+const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+let particles=[];
+class Particle{
+  constructor(){
+    this.x=Math.random()*canvas.width;
+    this.y=Math.random()*canvas.height;
+    this.dx=(Math.random()-0.5)*1;
+    this.dy=(Math.random()-0.5)*1;
+    this.radius=2;
+  }
+  draw(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    ctx.fillStyle="#00f5ff";
+    ctx.fill();
+  }
+  update(){
+    this.x+=this.dx;
+    this.y+=this.dy;
+    if(this.x<0||this.x>canvas.width) this.dx*=-1;
+    if(this.y<0||this.y>canvas.height) this.dy*=-1;
+    this.draw();
+  }
+}
+
+function initParticles(){
+  particles=[];
+  for(let i=0;i<80;i++) particles.push(new Particle());
+}
+
+function connect(){
+  for(let a=0;a<particles.length;a++){
+    for(let b=a;b<particles.length;b++){
+      let dx=particles[a].x-particles[b].x;
+      let dy=particles[a].y-particles[b].y;
+      let dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<120){
+        ctx.strokeStyle="rgba(0,245,255,0.1)";
+        ctx.beginPath();
+        ctx.moveTo(particles[a].x,particles[a].y);
+        ctx.lineTo(particles[b].x,particles[b].y);
+        ctx.stroke();
+      }
     }
+  }
 }
 
-function showResult() {
-    document.querySelector(".quiz-container").classList.add("hidden");
-    const resultContainer = document.getElementById("result-container");
-    resultContainer.classList.remove("hidden");
-    document.getElementById("score-text").textContent =
-        `You scored ${score} out of ${questions.length}`;
+function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>p.update());
+  connect();
+  requestAnimationFrame(animate);
 }
 
-function restartQuiz() {
-    currentQuestion = 0;
-    score = 0;
-    document.getElementById("result-container").classList.add("hidden");
-    document.querySelector(".quiz-container").classList.remove("hidden");
-    loadQuestion();
-}
+window.addEventListener("resize",()=>{
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+  initParticles();
+});
 
-nextBtn.onclick = nextQuestion;
-loadQuestion();
+initParticles();
+animate();
